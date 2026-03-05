@@ -20,14 +20,16 @@ Gemini AI + Google Search를 활용한 한국어 기술 뉴스 큐레이션 및 
 
 1. **Spec First**: 기능 추가/변경 시 반드시 `specs/` 디렉토리에 스펙을 먼저 작성
 2. **승인 후 구현**: 스펙을 사용자에게 보여주고 승인받은 후에만 구현 시작
-3. **Planning Files**: 복잡한 작업은 3-file pattern으로 진행 추적
+3. **Planning Files**: 5-file pattern으로 진행 추적
 
 ### 파일 구조
 
 ```
 specs/
-  SPEC.md              # 프로젝트 전체 스펙 (현재 상태 반영)
-  tasks.md             # 작업 계획 및 추적
+  README.md            # 프로젝트 개요 (Background, Goal, How it works)
+  spec.md              # 요구사항 및 상세 스펙 (What)
+  plan.md              # 기술 구현 계획 (How)
+  tasks.md             # 작업 계획 및 추적 (Phase 기반)
   findings.md          # 기술적 발견사항 및 결정
   progress.md          # 세션별 작업 내역
 ```
@@ -35,15 +37,17 @@ specs/
 ### 작업 흐름
 
 1. 사용자가 기능 요청
-2. `specs/SPEC.md` 업데이트 (새 기능 스펙 추가)
+2. `specs/spec.md` 업데이트 (새 기능 스펙 추가)
 3. 사용자 승인
-4. `specs/tasks.md`에 작업 계획 작성
-5. 구현하면서 `specs/findings.md`, `specs/progress.md` 업데이트
-6. 완료 후 `specs/SPEC.md` 최종 반영
+4. `specs/plan.md`에 기술 구현 계획 작성
+5. `specs/tasks.md`에 작업 항목 분해 (Phase 기반)
+6. 구현하면서 `specs/findings.md`, `specs/progress.md` 업데이트
+7. 완료 후 `specs/spec.md` 최종 반영
 
 ### 스펙 작성 원칙
 
-- **What(무엇을)** 만들지 정의, How(어떻게)는 plan에서
+- **What(무엇을)** 은 `spec.md`에, **How(어떻게)** 는 `plan.md`에
+- 도메인 모델, 코드 예시, 기술 구현 세부사항은 spec.md에 넣지 않음 (plan.md, findings.md에서 다룸)
 - 사용자 시나리오 + 수용 기준(Given/When/Then) 포함
 - 기능 요구사항은 MUST/SHOULD로 구분
 - 제약사항과 성공 기준 명시

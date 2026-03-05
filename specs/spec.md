@@ -5,6 +5,9 @@
 ZEEK은 AI 기반 데일리 기술 뉴스 큐레이션 서비스다.
 Google Gemini AI가 매일 주요 기술 뉴스를 수집/요약하고, 웹과 이메일로 전달한다.
 
+<!-- 도메인 모델, 코드 예시, 기술적 구현 세부사항은 이 문서에 포함하지 않습니다.
+     이러한 내용은 plan.md와 findings.md에서 다룹니다. -->
+
 ---
 
 ## User Scenarios
@@ -66,7 +69,7 @@ Google Gemini AI가 매일 주요 기술 뉴스를 수집/요약하고, 웹과 �
 - **FR-2**: MUST - 1회 API 호출로 전체 카테고리 30~40개 아이템 요청 (카테고리당 3~5개)
 - **FR-3**: MUST - 한국어로 작성, 영어/한국어 소스 모두 검색
 - **FR-4**: MUST - 각 아이템에 title, summary, whyItMatters, sourceHint 포함
-- **FR-5**: MUST - grounding redirect URL → query param 직접 파싱 또는 302 chain follow(최대 5 hop)로 실제 URL 확보, 실패 시 DuckDuckGo !ducky fallback (첫 검색 결과로 자동 리다이렉트)
+- **FR-5**: MUST - grounding redirect URL → query param 직접 파싱 또는 302 chain follow(최대 5 hop)로 실제 URL 확보, 실패 시 DuckDuckGo !ducky fallback
 - **FR-29**: MUST - 소스 범위: 뉴스 매체, 개발자 커뮤니티(HN, GeekNews, Reddit), 소셜(X/Twitter), 블로그, GitHub 등
 
 ### 카테고리
@@ -126,9 +129,9 @@ Google Gemini AI가 매일 주요 기술 뉴스를 수집/요약하고, 웹과 �
 - **CON-1**: Gemini free tier 제한 (5 RPM, 20 RPD) → 전체 카테고리 1회 통합 호출 (일 2회: 다이제스트 + 월간 요약)
 - **CON-2**: 뉴스 수집은 지난 24시간 이내만
 - **CON-3**: Vercel Cron 2개: 생성 UTC 15:00 (KST 00:00) + 발송 UTC 23:00 (KST 08:00), 이메일은 평일만
-- **CON-6**: Vercel Hobby 플랜 함수 타임아웃 → maxDuration 300초 설정 (Gemini API 응답 대기)
 - **CON-4**: Neon serverless PostgreSQL 사용
 - **CON-5**: Resend 테스트 도메인(`onboarding@resend.dev`) 사용 → Gmail 구독자만 허용 (커스텀 도메인 등록 시 해제 가능)
+- **CON-6**: Vercel Hobby 플랜 함수 타임아웃 → maxDuration 300초 설정 (Gemini API 응답 대기)
 
 ---
 
@@ -141,52 +144,7 @@ Google Gemini AI가 매일 주요 기술 뉴스를 수집/요약하고, 웹과 �
 
 ---
 
-## Data Model
-
-### Digest
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | String (CUID) | PK |
-| date | DateTime (unique) | 다이제스트 날짜 |
-| createdAt | DateTime | 생성 시각 |
-
-### DigestItem
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | String (CUID) | PK |
-| digestId | String (FK) | Digest 참조 |
-| category | String | 카테고리 ID |
-| title | String | 헤드라인 |
-| summary | String | 한 줄 요약 |
-| whyItMatters | String | 개발자 관련성 |
-| sourceUrl | String | 원본 기사 URL |
-| order | Int | 표시 순서 |
-
-### MonthlySummary
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | String (CUID) | PK |
-| year | Int | 연도 |
-| month | Int | 월 (0-indexed) |
-| content | String | AI 생성 월간 요약 텍스트 |
-
-### Subscriber
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | String (CUID) | PK |
-| email | String (unique) | 이메일 |
-| active | Boolean | 구독 상태 |
-| token | String (unique) | 해지용 토큰 |
-| createdAt | DateTime | 가입 시각 |
-| unsubscribedAt | DateTime? | 해지 시각 |
-
----
-
-## API Endpoints
+## API Specification
 
 ### POST /api/subscribe
 
@@ -206,10 +164,8 @@ Google Gemini AI가 매일 주요 기술 뉴스를 수집/요약하고, 웹과 �
 
 ### GET /api/cron/generate
 
-다이제스트 콘텐츠 생성 + 이번 달 월간 요약 갱신 (Bearer 인증, 이메일 발송 없음)
+다이제스트 콘텐츠 생성 + 이번 달 월간 요약 갱신 (Bearer 인증)
 
-- 매일 KST 00:00에 다이제스트 생성 후 이번 달 월간 요약도 갱신 (force)
-- 매월 1일에는 지난 달 요약도 최종 확정
 - **Response 200**: `{ ok: true, id: string }`
 - **Response 401**: `{ error: "Unauthorized" }`
 
@@ -217,7 +173,6 @@ Google Gemini AI가 매일 주요 기술 뉴스를 수집/요약하고, 웹과 �
 
 오늘자 다이제스트 이메일 발송 (Bearer 인증, 평일만)
 
-- 매일 KST 08:00에 실행, 주말이면 스킵
 - **Response 200**: `{ ok: true, sent: number, total: number }`
 - **Response 401**: `{ error: "Unauthorized" }`
 
