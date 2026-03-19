@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.2](https://github.com/vouxx/ZEEK/compare/v1.2.1...v1.2.2) (2026-03-19)
+
+
+### 버그 수정
+
+* PhoneFrame showIntro hydration mismatch 수정 ([0198787](https://github.com/vouxx/ZEEK/commit/01987871b64940b48f6e1531c1fb4abdb42a833c)), closes [#418](https://github.com/vouxx/ZEEK/issues/418)
+
 ### [1.2.1](https://github.com/vouxx/ZEEK/compare/v1.2.0...v1.2.1) (2026-03-19)
 
 
