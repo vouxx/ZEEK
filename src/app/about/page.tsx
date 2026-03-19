@@ -56,8 +56,7 @@ export default function AboutPage() {
             "TypeScript",
             "Tailwind CSS",
             "Gemini AI",
-            "PostgreSQL",
-            "Prisma",
+            "Supabase",
             "Resend",
             "Vercel",
           ].map((tech) => (
