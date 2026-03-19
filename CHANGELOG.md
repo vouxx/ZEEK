@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.1](https://github.com/vouxx/ZEEK/compare/v1.2.0...v1.2.1) (2026-03-19)
+
+
+### 버그 수정
+
+* Footer 버전 동기화 수정 — bumpFiles updater 방식으로 전환 ([b5c61a5](https://github.com/vouxx/ZEEK/commit/b5c61a5b0f47ebd82aec23e34fbd8ccc4f4bf081))
+
 ## [1.2.0](https://github.com/vouxx/ZEEK/compare/v1.1.1...v1.2.0) (2026-03-19)
 
 ### [1.1.1](https://github.com/vouxx/ZEEK/compare/v1.1.0...v1.1.1) (2026-03-19)
