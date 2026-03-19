@@ -8,7 +8,9 @@
     { "type": "docs", "section": "문서", "hidden": true },
     { "type": "chore", "section": "기타", "hidden": true }
   ],
-  "scripts": {
-    "postbump": "node scripts/postbump.mjs"
-  }
+  "bumpFiles": [
+    { "filename": "package.json", "type": "json" },
+    { "filename": "package-lock.json", "type": "json" },
+    { "filename": "src/components/Footer.tsx", "updater": "scripts/footer-updater.mjs" }
+  ]
 }
