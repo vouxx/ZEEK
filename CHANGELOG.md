@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.1](https://github.com/vouxx/ZEEK/compare/v1.1.0...v1.1.1) (2026-03-19)
+
+
+### 기능 추가
+
+* About 페이지 추가 + README/스펙 업데이트 ([c8b6108](https://github.com/vouxx/ZEEK/commit/c8b610854465c3cd2e3bb1cd5240d8eb34c122a1))
+
+
+### 버그 수정
+
+* About 페이지 기술 스택 Prisma → Supabase 반영 ([dbd473b](https://github.com/vouxx/ZEEK/commit/dbd473b10105772f05964ac5baf10fdf4e76b9a3))
+
 ## [1.1.0](https://github.com/vouxx/ZEEK/compare/v1.0.0...v1.1.0) (2026-03-19)
 
 
