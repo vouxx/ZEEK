@@ -9,7 +9,7 @@ Google Gemini AI가 매일 주요 기술 뉴스를 수집/요약하고, 웹과 �
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS 4
-- **Database**: PostgreSQL (Neon serverless) + Prisma 7
+- **Database**: PostgreSQL (Supabase)
 - **AI**: Google Gemini 2.5 Flash + Google Search
 - **Email**: Resend + React Email
 - **Deployment**: Vercel (Cron)
@@ -29,9 +29,6 @@ Google Gemini AI가 매일 주요 기술 뉴스를 수집/요약하고, 웹과 �
 # 의존성 설치
 npm install
 
-# Prisma 클라이언트 생성
-npx prisma generate
-
 # 개발 서버 실행
 npm run dev
 ```
@@ -41,8 +38,9 @@ http://localhost:3000 에서 확인.
 ## Environment Variables
 
 ```bash
-DATABASE_URL=           # Neon PostgreSQL 연결 문자열
-GEMINI_API_KEY=         # Google Gemini API 키
+NEXT_PUBLIC_SUPABASE_URL=  # Supabase 프로젝트 URL
+SUPABASE_SERVICE_ROLE_KEY= # Supabase service role 키
+GEMINI_API_KEY=            # Google Gemini API 키
 RESEND_API_KEY=         # Resend API 키
 RESEND_FROM_EMAIL=      # 발신 이메일 (예: "ZEEK <digest@zeek.dev>")
 CRON_SECRET=            # 크론 인증 토큰
@@ -66,7 +64,7 @@ src/
 ├── emails/                  # React Email 템플릿
 ├── lib/                     # 핵심 로직 (gemini, digest, constants)
 └── types/                   # TypeScript 타입
-prisma/                      # DB 스키마
+prisma/                      # DB 스키마 (레거시, 참조용)
 specs/                       # 스펙 및 계획 문서
 scripts/                     # 유틸리티 스크립트
 ```

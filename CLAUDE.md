@@ -9,7 +9,7 @@ Gemini AI + Google Search를 활용한 한국어 기술 뉴스 큐레이션 및 
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS 4
-- **Database**: PostgreSQL (Neon serverless) + Prisma 7
+- **Database**: PostgreSQL (Supabase)
 - **AI**: Google Gemini 2.5 Flash
 - **Email**: Resend + React Email
 - **Deployment**: Vercel (Cron)
@@ -67,5 +67,5 @@ npm run lint         # ESLint
 - `src/lib/` - 핵심 비즈니스 로직 (gemini, digest, constants)
 - `src/emails/` - React Email 템플릿
 - `src/types/` - TypeScript 타입 정의
-- `prisma/` - 데이터베이스 스키마
+- `prisma/` - 데이터베이스 스키마 (레거시, 참조용)
 - `specs/` - 스펙 및 계획 문서
