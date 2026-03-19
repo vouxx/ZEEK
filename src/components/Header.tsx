@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/", label: "최신" },
   { href: "/archive", label: "아카이브" },
   { href: "/subscribe", label: "구독" },
+  { href: "/about", label: "소개" },
 ];
 
 export function Header() {

@@ -17,11 +17,14 @@ Google Gemini AI가 매일 주요 기술 뉴스를 수집/요약하고, 웹과 �
 ## Features
 
 - 8개 기술 카테고리 뉴스 자동 수집 (AI/ML, Web Dev, Cloud/Infra, Security, Mobile, Startups, Open Source, Science/Tech)
-- Gemini grounding metadata 기반 출처 URL 검증
+- Gemini grounding metadata 기반 출처 URL 검증 + DuckDuckGo fallback
 - 카테고리별 필터링 웹 UI
-- 날짜별 아카이브
+- 월별 그룹 아카이브 (통계 + AI 요약)
 - 이메일 구독/해지
-- Vercel Cron 기반 일일 자동 생성 (UTC 23:00)
+- 아이폰 목업 UI (데스크톱) / 풀스크린 (모바일)
+- 다크모드 지원
+- About 페이지
+- Vercel Cron 기반 일일 자동 생성 (UTC 15:00) + 평일 발송 (UTC 23:00)
 
 ## Getting Started
 
@@ -53,16 +56,19 @@ NEXT_PUBLIC_APP_URL=    # 앱 공개 URL
 src/
 ├── app/
 │   ├── api/
+│   │   ├── cron/            # 다이제스트 생성/발송 크론
+│   │   ├── health/          # 헬스체크 API
 │   │   ├── subscribe/       # 구독 API
-│   │   ├── unsubscribe/     # 구독 해지 API
-│   │   └── cron/generate/   # 다이제스트 생성 크론
-│   ├── digest/[date]/       # 날짜별 다이제스트 페이지
+│   │   └── unsubscribe/     # 구독 해지 API
+│   ├── about/               # About 페이지
 │   ├── archive/             # 아카이브 페이지
+│   ├── digest/[date]/       # 날짜별 다이제스트 페이지
+│   ├── subscribe/           # 구독 페이지
 │   ├── unsubscribe/         # 구독 해지 페이지
 │   └── page.tsx             # 홈 (최신 다이제스트)
 ├── components/              # React 컴포넌트
 ├── emails/                  # React Email 템플릿
-├── lib/                     # 핵심 로직 (gemini, digest, constants)
+├── lib/                     # 핵심 로직 (gemini, digest, supabase, resend, constants)
 └── types/                   # TypeScript 타입
 prisma/                      # DB 스키마 (레거시, 참조용)
 specs/                       # 스펙 및 계획 문서
