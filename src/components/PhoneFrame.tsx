@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StatusBar } from "./StatusBar";
 import { HomeIndicator } from "./HomeIndicator";
 import { Header } from "./Header";
@@ -8,10 +8,13 @@ import { Footer } from "./Footer";
 import { Intro } from "./Intro";
 
 export function PhoneFrame({ children }: { children: React.ReactNode }) {
-  const [showIntro, setShowIntro] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return !sessionStorage.getItem("zeek-intro-seen");
-  });
+  const [showIntro, setShowIntro] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!sessionStorage.getItem("zeek-intro-seen")) setShowIntro(true);
+    } catch { /* 인앱 브라우저 등 storage 접근 불가 */ }
+  }, []);
 
   const handleIntroDone = useCallback(() => {
     sessionStorage.setItem("zeek-intro-seen", "1");

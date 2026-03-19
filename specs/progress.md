@@ -166,6 +166,21 @@
 
 ---
 
+## Session 2026-03-19
+
+### Hydration Mismatch 수정 (vouxx_resume 크로스 레포)
+
+**작업 내역**:
+
+1. `PhoneFrame.tsx` — `showIntro` state 초기화를 `useState(false)` + `useEffect`로 변경
+2. 원인: vouxx_resume의 Playwright 테스트에서 iframe으로 로드한 ZEEK 사이트의 React #418 에러 발견
+
+**수정 파일**:
+
+- `src/components/PhoneFrame.tsx` (수정 — showIntro hydration 수정)
+
+---
+
 ## Error Log
 
 | Timestamp  | Error | Attempt | Resolution |
@@ -173,13 +188,14 @@
 | 2026-02-25 | SDK grounding metadata 누락 | 1 | REST API 직접 호출로 전환 |
 | 2026-02-25 | Gemini 20 RPD 초과 | 1 | 1회 통합 호출로 전환 |
 | 2026-02-25 | 크론 504 타임아웃 | 1 | maxDuration 300초 |
+| 2026-03-19 | PhoneFrame hydration #418 | 1 | useState(false) + useEffect |
 
 ## 5-Question Reboot Check
 
 | Question | Answer |
 | -------- | ------ |
-| 1. 현재 어느 단계인가? | 초기 구축 완료, 운영 중 |
-| 2. 다음에 할 일은? | 새 기능 요청 대기 (backlog 비어있음) |
+| 1. 현재 어느 단계인가? | 초기 구축 완료, 운영 중 (hydration 수정 반영) |
+| 2. 다음에 할 일은? | 배포 후 확인, 새 기능 요청 대기 |
 | 3. 목표는? | AI 기반 한국어 데일리 기술 뉴스레터 |
 | 4. 지금까지 배운 것? | findings.md 참조 |
 | 5. 완료한 작업은? | 위 세션 기록 참조 |

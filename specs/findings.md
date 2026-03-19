@@ -132,6 +132,16 @@ SDK 제거, `fetch()`로 REST API 직접 호출 (`callGeminiRaw()` 함수)
 
 크론 정상 실행
 
+### 4. PhoneFrame showIntro Hydration Mismatch (2026-03-19)
+
+**문제**: vouxx_resume iframe에서 React #418 hydration 에러 발생
+
+**원인**: `PhoneFrame.tsx`에서 `useState` 초기화 시 `sessionStorage` 접근 → 서버(`false`) / 클라이언트(`true`, 첫 방문) 불일치
+
+**해결**: `useState(false)` + `useEffect`에서 sessionStorage 확인 후 `setShowIntro(true)`
+
+**결과**: hydration mismatch 제거
+
 ## Learnings
 
 ### Gemini grounding은 REST API 직접 호출이 안전 (2026-02-25)
