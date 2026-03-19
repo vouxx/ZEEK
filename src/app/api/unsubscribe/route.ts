@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -9,18 +9,20 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Token required" }, { status: 400 });
     }
 
-    const subscriber = await prisma.subscriber.findUnique({
-      where: { token },
-    });
+    const { data: subscriber } = await supabase
+      .from("Subscriber")
+      .select("*")
+      .eq("token", token)
+      .single();
 
     if (!subscriber) {
       return Response.json({ error: "Invalid token" }, { status: 404 });
     }
 
-    await prisma.subscriber.update({
-      where: { token },
-      data: { active: false, unsubscribedAt: new Date() },
-    });
+    await supabase
+      .from("Subscriber")
+      .update({ active: false, unsubscribedAt: new Date().toISOString() })
+      .eq("token", token);
 
     return Response.json({ message: "Unsubscribed successfully" });
   } catch (e) {

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { Welcome } from "@/emails/Welcome";
 import { render } from "@react-email/render";
@@ -32,22 +32,35 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "현재 Gmail 주소만 구독 가능합니다" }, { status: 400 });
     }
 
-    const existing = await prisma.subscriber.findUnique({ where: { email } });
+    const { data: existing } = await supabase
+      .from("Subscriber")
+      .select("*")
+      .eq("email", email)
+      .single();
 
     if (existing) {
       if (existing.active) {
         return Response.json({ message: "이미 구독 중입니다" });
       }
       // Re-subscribe
-      await prisma.subscriber.update({
-        where: { email },
-        data: { active: true, unsubscribedAt: null },
-      });
+      await supabase
+        .from("Subscriber")
+        .update({ active: true, unsubscribedAt: null })
+        .eq("email", email);
       sendWelcomeEmail(email, existing.token);
       return Response.json({ message: "다시 구독되었습니다!" });
     }
 
-    const subscriber = await prisma.subscriber.create({ data: { email } });
+    const { data: subscriber, error } = await supabase
+      .from("Subscriber")
+      .insert({ email })
+      .select()
+      .single();
+
+    if (error || !subscriber) {
+      throw new Error(`Failed to create subscriber: ${error?.message}`);
+    }
+
     sendWelcomeEmail(email, subscriber.token);
     return Response.json({ message: "구독 완료! 환영 이메일을 보내드렸습니다." });
   } catch (e) {

@@ -1,9 +1,19 @@
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
+import { createClient } from "@supabase/supabase-js";
 
-const sql = neon(process.env.DATABASE_URL);
-const items = await sql`SELECT title, "sourceUrl", category FROM "jeek"."DigestItem" ORDER BY category, "order"`;
-for (const item of items) {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { db: { schema: "zeek" } }
+);
+
+const { data: items } = await supabase
+  .from("DigestItem")
+  .select("title, sourceUrl, category")
+  .order("category")
+  .order("order");
+
+for (const item of items ?? []) {
   console.log(`[${item.category}] ${item.title}`);
   console.log(`  → ${item.sourceUrl}`);
   console.log();

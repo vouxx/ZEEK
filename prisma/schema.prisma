@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["jeek"]
+  schemas  = ["zeek"]
 }
 
 model Digest {
@@ -16,7 +16,7 @@ model Digest {
   items     DigestItem[]
 
   @@index([date(sort: Desc)])
-  @@schema("jeek")
+  @@schema("zeek")
 }
 
 model DigestItem {
@@ -32,7 +32,7 @@ model DigestItem {
 
   @@index([digestId])
   @@index([category])
-  @@schema("jeek")
+  @@schema("zeek")
 }
 
 model MonthlySummary {
@@ -42,7 +42,7 @@ model MonthlySummary {
   content String
 
   @@unique([year, month])
-  @@schema("jeek")
+  @@schema("zeek")
 }
 
 model Subscriber {
@@ -55,5 +55,5 @@ model Subscriber {
 
   @@index([active])
   @@index([token])
-  @@schema("jeek")
+  @@schema("zeek")
 }

@@ -1,6 +1,6 @@
 import type { Category, NewsItem } from "@/types/digest";
 import { CATEGORIES, CATEGORY_KEYS } from "./constants";
-import { prisma } from "./prisma";
+import { supabase } from "./supabase";
 
 function buildCategoryList(): string {
   return CATEGORY_KEYS.map((key) => `- "${key}": ${CATEGORIES[key].description}`).join("\n");
@@ -314,27 +314,37 @@ export async function fetchAllNews(): Promise<Map<Category, NewsItem[]>> {
  */
 export async function generateMonthlySummary(year: number, month: number, force = false): Promise<string> {
   if (!force) {
-    const existing = await prisma.monthlySummary.findUnique({
-      where: { year_month: { year, month } },
-    });
+    const { data: existing } = await supabase
+      .from("MonthlySummary")
+      .select("*")
+      .eq("year", year)
+      .eq("month", month)
+      .single();
     if (existing) return existing.content;
   }
 
   // 해당 월의 다이제스트 아이템 조회
-  const startDate = new Date(Date.UTC(year, month, 1));
-  const endDate = new Date(Date.UTC(year, month + 1, 1));
+  const startDate = new Date(Date.UTC(year, month, 1)).toISOString().split("T")[0];
+  const endDate = new Date(Date.UTC(year, month + 1, 1)).toISOString().split("T")[0];
 
-  const items = await prisma.digestItem.findMany({
-    where: {
-      digest: {
-        date: { gte: startDate, lt: endDate },
-      },
-    },
-    select: { category: true, title: true, summary: true },
-    orderBy: { digest: { date: "asc" } },
-  });
+  // 해당 월의 Digest ID 조회 후 아이템 가져오기
+  const { data: digests } = await supabase
+    .from("Digest")
+    .select("id")
+    .gte("date", startDate)
+    .lt("date", endDate)
+    .order("date", { ascending: true });
 
-  if (items.length === 0) {
+  const digestIds = (digests ?? []).map((d: { id: string }) => d.id);
+
+  const { data: items } = digestIds.length > 0
+    ? await supabase
+        .from("DigestItem")
+        .select("category, title, summary")
+        .in("digestId", digestIds)
+    : { data: [] as { category: string; title: string; summary: string }[] };
+
+  if (!items || items.length === 0) {
     return "";
   }
 
@@ -373,11 +383,23 @@ export async function generateMonthlySummary(year: number, month: number, force 
   const content = response?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
 
   // DB에 저장 (upsert: 있으면 갱신, 없으면 생성)
-  await prisma.monthlySummary.upsert({
-    where: { year_month: { year, month } },
-    update: { content },
-    create: { year, month, content },
-  });
+  const { data: existingRow } = await supabase
+    .from("MonthlySummary")
+    .select("id")
+    .eq("year", year)
+    .eq("month", month)
+    .single();
+
+  if (existingRow) {
+    await supabase
+      .from("MonthlySummary")
+      .update({ content })
+      .eq("id", existingRow.id);
+  } else {
+    await supabase
+      .from("MonthlySummary")
+      .insert({ year, month, content });
+  }
 
   console.log(`[monthly-summary] Generated for ${monthLabel}`);
   return content;

@@ -1,4 +1,4 @@
-import { prisma } from "./prisma";
+import { supabase } from "./supabase";
 import { getResend } from "./resend";
 import { fetchAllNews } from "./gemini";
 import { CATEGORY_KEYS, CATEGORIES } from "./constants";
@@ -17,46 +17,57 @@ function getTodayKST(): Date {
 /** 오늘자 다이제스트 콘텐츠만 생성 (이메일 발송 없음) */
 export async function generateDigest() {
   const today = getTodayKST();
+  const todayStr = today.toISOString().split("T")[0];
 
   // Check if already generated today
-  const existing = await prisma.digest.findUnique({
-    where: { date: today },
-    include: { items: true },
-  });
-  if (existing && existing.items.length > 0) {
+  const { data: existing } = await supabase
+    .from("Digest")
+    .select("*, DigestItem(*)")
+    .eq("date", todayStr)
+    .single();
+
+  if (existing && existing.DigestItem.length > 0) {
     console.log("Digest already exists for today, skipping generation");
-    return existing;
+    return { ...existing, items: existing.DigestItem };
   }
   // 빈 다이제스트가 있으면 삭제 후 재생성
   if (existing) {
-    await prisma.digest.delete({ where: { id: existing.id } });
+    await supabase.from("Digest").delete().eq("id", existing.id);
   }
 
   // 1회 API 호출로 모든 카테고리 뉴스 가져오기 (Gemini free tier 20 RPD 대응)
   const newsMap = await fetchAllNews();
 
   // Store in database
-  const digest = await prisma.digest.create({
-    data: {
-      date: today,
-      items: {
-        create: CATEGORY_KEYS.flatMap((category) =>
-          (newsMap.get(category) ?? []).map((item, index) => ({
-            category,
-            title: item.title,
-            summary: item.summary,
-            whyItMatters: item.whyItMatters,
-            sourceUrl: item.sourceUrl,
-            order: index,
-          }))
-        ),
-      },
-    },
-    include: { items: true },
-  });
+  const { data: digest, error: digestError } = await supabase
+    .from("Digest")
+    .insert({ date: todayStr })
+    .select()
+    .single();
 
-  console.log(`Digest generated: ${digest.items.length} items`);
-  return digest;
+  if (digestError || !digest) {
+    throw new Error(`Failed to create digest: ${digestError?.message}`);
+  }
+
+  const itemsToInsert = CATEGORY_KEYS.flatMap((category) =>
+    (newsMap.get(category) ?? []).map((item, index) => ({
+      digestId: digest.id,
+      category,
+      title: item.title,
+      summary: item.summary,
+      whyItMatters: item.whyItMatters,
+      sourceUrl: item.sourceUrl,
+      order: index,
+    }))
+  );
+
+  const { data: items } = await supabase
+    .from("DigestItem")
+    .insert(itemsToInsert)
+    .select();
+
+  console.log(`Digest generated: ${items?.length ?? 0} items`);
+  return { ...digest, items: items ?? [] };
 }
 
 /** 오늘자 다이제스트의 이메일만 발송 (평일만, 콘텐츠 생성 없이) */
@@ -70,26 +81,35 @@ export async function sendTodayDigest() {
   }
 
   const today = getTodayKST();
+  const todayStr = today.toISOString().split("T")[0];
 
-  const digest = await prisma.digest.findUnique({
-    where: { date: today },
-    include: { items: { orderBy: { order: "asc" } } },
-  });
+  const { data: digest } = await supabase
+    .from("Digest")
+    .select("*, DigestItem(*)")
+    .eq("date", todayStr)
+    .single();
 
   if (!digest) {
     return { ok: false, error: "No digest for today" };
   }
 
-  const subscribers = await prisma.subscriber.findMany({
-    where: { active: true },
-  });
+  const { data: subscribers } = await supabase
+    .from("Subscriber")
+    .select("*")
+    .eq("active", true);
+
+  if (!subscribers) {
+    return { ok: false, error: "Failed to fetch subscribers" };
+  }
+
+  const sortedItems = digest.DigestItem.sort((a: { order: number }, b: { order: number }) => a.order - b.order);
 
   const categoryDigests: CategoryDigest[] = CATEGORY_KEYS.map((key) => ({
     category: key,
     label: CATEGORIES[key].label,
-    items: digest.items
-      .filter((item) => item.category === key)
-      .map((item) => ({
+    items: sortedItems
+      .filter((item: { category: string }) => item.category === key)
+      .map((item: { title: string; summary: string; whyItMatters: string; sourceUrl: string }) => ({
         title: item.title,
         summary: item.summary,
         whyItMatters: item.whyItMatters,
@@ -130,33 +150,45 @@ export async function sendTodayDigest() {
 }
 
 export async function getLatestDigest() {
-  return prisma.digest.findFirst({
-    orderBy: { date: "desc" },
-    include: { items: { orderBy: { order: "asc" } } },
-  });
+  const { data } = await supabase
+    .from("Digest")
+    .select("*, DigestItem(*)")
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!data) return null;
+  const items = data.DigestItem.sort((a: { order: number }, b: { order: number }) => a.order - b.order);
+  return { ...data, items };
 }
 
 export async function getDigestByDate(date: Date) {
-  return prisma.digest.findUnique({
-    where: { date },
-    include: { items: { orderBy: { order: "asc" } } },
-  });
+  const dateStr = date.toISOString().split("T")[0];
+  const { data } = await supabase
+    .from("Digest")
+    .select("*, DigestItem(*)")
+    .eq("date", dateStr)
+    .single();
+
+  if (!data) return null;
+  const items = data.DigestItem.sort((a: { order: number }, b: { order: number }) => a.order - b.order);
+  return { ...data, items };
 }
 
 export async function getArchiveData(): Promise<MonthSummary[]> {
-  const digests = await prisma.digest.findMany({
-    select: {
-      date: true,
-      items: { select: { category: true } },
-    },
-    orderBy: { date: "desc" },
-  });
+  const { data: digests } = await supabase
+    .from("Digest")
+    .select("date, DigestItem(category)")
+    .order("date", { ascending: false });
+
+  if (!digests) return [];
 
   const monthMap = new Map<string, MonthSummary>();
 
   for (const digest of digests) {
-    const year = digest.date.getUTCFullYear();
-    const month = digest.date.getUTCMonth();
+    const d = new Date(digest.date);
+    const year = d.getUTCFullYear();
+    const month = d.getUTCMonth();
     const key = `${year}-${month}`;
 
     if (!monthMap.has(key)) {
@@ -174,27 +206,30 @@ export async function getArchiveData(): Promise<MonthSummary[]> {
       });
     }
 
+    const items = digest.DigestItem as { category: string }[];
     const entry = monthMap.get(key)!;
     entry.digestCount += 1;
-    entry.totalItems += digest.items.length;
+    entry.totalItems += items.length;
     entry.dates.push({
-      dateStr: digest.date.toISOString().split("T")[0],
-      displayStr: digest.date.toLocaleDateString("ko-KR", {
+      dateStr: d.toISOString().split("T")[0],
+      displayStr: d.toLocaleDateString("ko-KR", {
         month: "long",
         day: "numeric",
         weekday: "long",
       }),
-      itemCount: digest.items.length,
+      itemCount: items.length,
     });
   }
 
   // Category breakdown per month
   for (const digest of digests) {
-    const year = digest.date.getUTCFullYear();
-    const month = digest.date.getUTCMonth();
+    const d = new Date(digest.date);
+    const year = d.getUTCFullYear();
+    const month = d.getUTCMonth();
     const entry = monthMap.get(`${year}-${month}`)!;
+    const items = digest.DigestItem as { category: string }[];
 
-    for (const item of digest.items) {
+    for (const item of items) {
       const existing = entry.categoryBreakdown.find(
         (c) => c.category === item.category
       );
@@ -217,10 +252,15 @@ export async function getArchiveData(): Promise<MonthSummary[]> {
   }
 
   // 월간 요약 조회
-  const summaries = await prisma.monthlySummary.findMany();
-  for (const s of summaries) {
-    const entry = monthMap.get(`${s.year}-${s.month}`);
-    if (entry) entry.summary = s.content;
+  const { data: summaries } = await supabase
+    .from("MonthlySummary")
+    .select("*");
+
+  if (summaries) {
+    for (const s of summaries) {
+      const entry = monthMap.get(`${s.year}-${s.month}`);
+      if (entry) entry.summary = s.content;
+    }
   }
 
   return Array.from(monthMap.values());
