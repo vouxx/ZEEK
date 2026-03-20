@@ -159,7 +159,7 @@ export async function getLatestDigest() {
 
   if (!data) return null;
   const items = data.DigestItem.sort((a: { order: number }, b: { order: number }) => a.order - b.order);
-  return { ...data, items };
+  return { ...data, date: new Date(data.date), items };
 }
 
 export async function getDigestByDate(date: Date) {
@@ -172,7 +172,7 @@ export async function getDigestByDate(date: Date) {
 
   if (!data) return null;
   const items = data.DigestItem.sort((a: { order: number }, b: { order: number }) => a.order - b.order);
-  return { ...data, items };
+  return { ...data, date: new Date(data.date), items };
 }
 
 export async function getArchiveData(): Promise<MonthSummary[]> {
